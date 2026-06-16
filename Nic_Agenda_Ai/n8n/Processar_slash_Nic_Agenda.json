@@ -1,0 +1,1643 @@
+{
+  "name": "Processar slash Nic Agenda",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "processar-agenda",
+        "options": {
+          "responseData": "success"
+        }
+      },
+      "name": "Webhook Discord",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -4464,
+        304
+      ],
+      "id": "1b92925d-616f-4cfe-bf78-b7690d8e1faf",
+      "webhookId": "354bd6b2-5c1e-4480-a6f0-35cbd1eccd09"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\n\nconst options = body.data?.options || [];\nconst getOption = (name) => options.find(o => o.name === name)?.value || \"\";\n\nconst rawAcao = String(\n  body.acao ||\n  body.action ||\n  getOption(\"acao\") ||\n  \"\"\n).toLowerCase().trim();\n\nconst mapa = {\n  hoje: \"agenda_hoje\",\n  amanha: \"agenda_amanha\",\n  \"amanhã\": \"agenda_amanha\",\n  semana: \"agenda_semana\",\n  dia: \"agenda_dia\",\n  criar: \"criar_evento\",\n  excluir: \"excluir_evento\",\n  deletar: \"excluir_evento\",\n  apagar: \"excluir_evento\",\n  sincronizar: \"sincronizar_agenda\",\n  sync: \"sincronizar_agenda\"\n};\n\nlet acao = mapa[rawAcao] || \"desconhecida\";\n\n// Compatibilidade com comando antigo por mensagem\nconst msgOriginal = String(body.mensagem || body.mensagemOriginal || \"\").trim();\nconst msg = msgOriginal\n  .toLowerCase()\n  .normalize(\"NFD\")\n  .replace(/[\\u0300-\\u036f]/g, \"\");\n\nif (acao === \"desconhecida\" && msg) {\n  if (msg.includes(\"excluir\") || msg.includes(\"deletar\") || msg.includes(\"apagar\")) acao = \"excluir_evento\";\n  else if (msg.includes(\"sincronizar\") || msg.includes(\"sync\") || msg.includes(\"importar\")) acao = \"sincronizar_agenda\";\n  else if (msg.includes(\"criar\") || msg.includes(\"marcar\") || msg.includes(\"agendar\")) acao = \"criar_evento\";\n  else if (msg.includes(\"semana\")) acao = \"agenda_semana\";\n  else if (msg.includes(\"amanha\")) acao = \"agenda_amanha\";\n  else if (msg.includes(\"hoje\")) acao = \"agenda_hoje\";\n  else if (msg.includes(\"dia\")) acao = \"agenda_dia\";\n}\n\nreturn [\n  {\n    json: {\n      origem: body.origem || \"discord_slash_command\",\n      applicationId: body.applicationId || body.application_id || \"\",\n      token: body.token || \"\",\n      commandName: body.commandName || body.data?.name || \"agenda\",\n      acao,\n      acaoOriginal: rawAcao,\n      titulo: body.titulo || getOption(\"titulo\") || \"\",\n      data: body.dataTexto || body.data || getOption(\"data\") || \"\",\n      hora: body.hora || getOption(\"hora\") || \"\",\n      email: body.email || getOption(\"email\") || \"\",\n      mensagem: msg,\n      mensagemOriginal: msgOriginal,\n      usuario: body.usuario || body.member?.user?.username || body.user?.username || \"Usuário Discord\",\n      userId: body.userId || body.member?.user?.id || body.user?.id || \"\",\n      canal: body.canal || body.channelId || body.channel_id || \"\",\n      guildId: body.guildId || body.guild_id || \"\",\n      recebidoEm: new Date().toISOString()\n    }\n  }\n];"
+      },
+      "name": "Interpretar Comando",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4240,
+        304
+      ],
+      "id": "162b49a5-fb1a-41ae-ac86-3bdcf0c692c1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.acao}}",
+                    "rightValue": "agenda_hoje",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "b02093b7-5359-4502-a12d-1247e2013a6a"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.acao}}",
+                    "rightValue": "agenda_amanha",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "6b8fbfa0-5e38-4249-8be5-f6ce1b2bde4d"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.acao}}",
+                    "rightValue": "agenda_semana",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "7e11dac7-f249-49f9-895f-59c8555ca6ad"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.acao}}",
+                    "rightValue": "criar_evento",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "95d0aedb-ba5d-4aec-8349-18bd76050c27"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "fcadfd85-4499-4f65-9d43-12cdd27086b6",
+                    "leftValue": "={{$json.acao}}",
+                    "rightValue": "agenda_dia",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "7db9bd96-14cd-4437-a6ab-ffd5db068462",
+                    "leftValue": "={{$json.acao}}",
+                    "rightValue": "sincronizar_agenda",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "05c1c944-9ab4-49cf-90ff-f567ffb3e624",
+                    "leftValue": "={{$json.acao}}",
+                    "rightValue": "excluir_evento",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Switch Ação",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        -4016,
+        224
+      ],
+      "id": "85985f4c-96aa-462c-bfdd-c9da532352cf"
+    },
+    {
+      "parameters": {
+        "jsCode": "const texto = $json.mensagemOriginal || $json.mensagem || '';\nlet titulo = ($json.titulo || '').trim();\nlet data = ($json.data || '').trim();\nlet hora = ($json.hora || '').trim();\nlet email = ($json.email || '').trim().replace(/[<>,;]/g, '');\n\n// Compatibilidade com formato antigo: !agenda criar Reunião | 12/06/2026 | 14:00 | email@cliente.com\nif (!titulo || !data || !hora || !email) {\n  const partes = texto.split('|').map(p => p.trim());\n  if (partes.length >= 4) {\n    titulo = partes[0].replace(/!agenda/gi, '').replace(/criar/gi, '').replace(/marcar/gi, '').replace(/agendar/gi, '').trim();\n    data = partes[1];\n    hora = partes[2];\n    email = partes[3].trim().replace(/[<>,;]/g, '');\n  }\n}\n\nif (!titulo || !data || !hora || !email) {\n  return [{\n    json: {\n      ...$json,\n      erro: true,\n      resposta: '❌ Formato inválido. Use: /agenda acao:criar titulo:Reunião Cliente data:12/06/2026 hora:14:00 email:email@cliente.com'\n    }\n  }];\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n\nif (!emailRegex.test(email)) {\n  return [{\n    json: {\n      ...$json,\n      erro: true,\n      resposta: `❌ E-mail inválido recebido: ${email}`\n    }\n  }];\n}\n\nconst [dia, mes, ano] = data.split('/');\nif (!dia || !mes || !ano || !hora.includes(':')) {\n  return [{\n    json: {\n      ...$json,\n      erro: true,\n      resposta: '❌ Data ou hora inválida. Use data:12/06/2026 e hora:14:00'\n    }\n  }];\n}\n\nconst inicio = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}T${hora}:00-03:00`;\nconst fimDate = new Date(inicio);\nfimDate.setHours(fimDate.getHours() + 1);\nconst fim = fimDate.toISOString();\n\nreturn [{\n  json: {\n    ...$json,\n    erro: false,\n    titulo,\n    data,\n    hora,\n    email,\n    inicio,\n    fim,\n    descricao: `Evento criado pelo Bot Agenda NIC no Discord. Solicitante: ${$json.usuario || 'Discord'}`,\n    resposta: `✅ Evento preparado:\\nTítulo: ${titulo}\\nData: ${data}\\nHora: ${hora}\\nConvidado: ${email}`\n  }\n}];"
+      },
+      "name": "Preparar Evento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3792,
+        880
+      ],
+      "id": "5a34318c-a923-4d4a-afe6-bcfa77f0d60a"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst start = new Date(now);\nstart.setHours(0,0,0,0);\nconst end = new Date(now);\nend.setHours(23,59,59,999);\nreturn [{ json: { ...$json, inicio: start.toISOString(), fim: end.toISOString(), periodo: 'hoje' } }];"
+      },
+      "name": "Preparar Consulta Hoje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3792,
+        -272
+      ],
+      "id": "4d93a3b3-3c84-4107-b3bb-e534962838bc"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst start = new Date(now);\nstart.setDate(start.getDate()+1);\nstart.setHours(0,0,0,0);\nconst end = new Date(start);\nend.setHours(23,59,59,999);\nreturn [{ json: { ...$json, inicio: start.toISOString(), fim: end.toISOString(), periodo: 'amanhã' } }];"
+      },
+      "name": "Preparar Consulta Amanhã",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3792,
+        -80
+      ],
+      "id": "3daee286-3adc-43ad-b577-147f3c43fe89"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst start = new Date(now);\nstart.setHours(0,0,0,0);\nconst end = new Date(now);\nend.setDate(end.getDate()+7);\nend.setHours(23,59,59,999);\nreturn [{ json: { ...$json, inicio: start.toISOString(), fim: end.toISOString(), periodo: 'semana' } }];"
+      },
+      "name": "Preparar Consulta Semana",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3792,
+        112
+      ],
+      "id": "126ecf95-f588-4e70-ab5f-f03684cdcffe"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "whatsapp.automation@nic-labs.com.br",
+          "mode": "list",
+          "cachedResultName": "whatsapp.automation@nic-labs.com.br"
+        },
+        "returnAll": true,
+        "timeMin": "={{$json.inicio}}",
+        "timeMax": "={{$json.fim}}",
+        "options": {
+          "orderBy": "startTime"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -3568,
+        -272
+      ],
+      "id": "bebe87c7-cffb-49e2-8948-edad2a139339",
+      "name": "Buscar Eventos Hoje",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "VCxHqZiCVQ43DW0h",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "whatsapp.automation@nic-labs.com.br",
+          "mode": "list",
+          "cachedResultName": "whatsapp.automation@nic-labs.com.br"
+        },
+        "returnAll": true,
+        "timeMin": "={{$json.inicio}}",
+        "timeMax": "={{$json.fim}}",
+        "options": {
+          "orderBy": "startTime"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -3568,
+        -80
+      ],
+      "id": "8affd324-39ec-437d-8351-73c23afd80cd",
+      "name": "Buscar Eventos Amanhã",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "VCxHqZiCVQ43DW0h",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "whatsapp.automation@nic-labs.com.br",
+          "mode": "list",
+          "cachedResultName": "whatsapp.automation@nic-labs.com.br"
+        },
+        "returnAll": true,
+        "timeMin": "={{$json.inicio}}",
+        "timeMax": "={{$json.fim}}",
+        "options": {
+          "orderBy": "startTime"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -3568,
+        112
+      ],
+      "id": "403ecf03-2ad6-4b2f-9c29-047f694001fd",
+      "name": "Buscar Eventos Semana",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "VCxHqZiCVQ43DW0h",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const eventos = $input.all();\n\nconst appId = $('Interpretar Comando').first().json.applicationId;\nconst token = $('Interpretar Comando').first().json.token;\n\nif (eventos.length === 0) {\n  return [{\n    json: {\n      applicationId: appId,\n      token,\n      resposta: '📅 Nenhum evento encontrado para hoje.'\n    }\n  }];\n}\n\nlet texto = '📅 Agenda de hoje:\\n\\n';\n\nfor (const item of eventos) {\n  const ev = item.json;\n  const titulo = ev.summary || 'Sem título';\n  const inicioRaw = ev.start?.dateTime || ev.start?.date || ev.start;\n\n  let horario = '';\n  if (inicioRaw) {\n    const d = new Date(inicioRaw);\n    horario = d.toLocaleString('pt-BR', {\n      timeZone: 'America/Sao_Paulo',\n      hour: '2-digit',\n      minute: '2-digit'\n    });\n  }\n\n  texto += `• ${horario} - ${titulo}\\n`;\n}\n\nreturn [{\n  json: {\n    applicationId: appId,\n    token,\n    resposta: texto\n  }\n}];"
+      },
+      "name": "Formatar Eventos Hoje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3344,
+        -272
+      ],
+      "id": "4976469d-c3cb-4d8e-a717-329cfcfb5e59"
+    },
+    {
+      "parameters": {
+        "jsCode": "const eventos = $input.all();\n\nconst appId = $(\"Interpretar Comando\").first().json.applicationId;\nconst token = $(\"Interpretar Comando\").first().json.token;\n\nif (eventos.length === 0) {\n  return [{\n    json: {\n      applicationId: appId,\n      token,\n      resposta: '📅 Nenhum evento encontrado para amanhã.'\n    }\n  }];\n}\n\nlet texto = '📅 Agenda de amanhã:\\n\\n';\n\nfor (const item of eventos) {\n  const ev = item.json;\n  const titulo = ev.summary || ev.title || 'Sem título';\n  const inicioRaw = ev.start?.dateTime || ev.start?.date || ev.start;\n  let horario = '';\n\n  if (inicioRaw) {\n    const d = new Date(inicioRaw);\n    horario = isNaN(d)\n      ? String(inicioRaw)\n      : d.toLocaleString('pt-BR', {\n          timeZone: 'America/Sao_Paulo',\n          day: '2-digit',\n          month: '2-digit',\n          hour: '2-digit',\n          minute: '2-digit'\n        });\n  }\n\n  texto += `• ${horario} - ${titulo}\\n`;\n}\n\nreturn [{\n  json: {\n    applicationId: appId,\n    token,\n    resposta: texto\n  }\n}];"
+      },
+      "name": "Formatar Eventos Amanhã",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3344,
+        -80
+      ],
+      "id": "6ffd469f-9167-46a4-9260-e17c221c5d64"
+    },
+    {
+      "parameters": {
+        "jsCode": "const eventos = $input.all();\n\nconst appId = $(\"Interpretar Comando\").first().json.applicationId;\nconst token = $(\"Interpretar Comando\").first().json.token;\n\nif (eventos.length === 0) {\n  return [{\n    json: {\n      applicationId: appId,\n      token,\n      resposta: '📅 Nenhum evento encontrado para esta semana.'\n    }\n  }];\n}\n\nlet texto = '📅 Agenda da semana:\\n\\n';\n\nfor (const item of eventos) {\n  const ev = item.json;\n  const titulo = ev.summary || ev.title || 'Sem título';\n  const inicioRaw = ev.start?.dateTime || ev.start?.date || ev.start;\n  let horario = '';\n\n  if (inicioRaw) {\n    const d = new Date(inicioRaw);\n    horario = isNaN(d)\n      ? String(inicioRaw)\n      : d.toLocaleString('pt-BR', {\n          timeZone: 'America/Sao_Paulo',\n          day: '2-digit',\n          month: '2-digit',\n          hour: '2-digit',\n          minute: '2-digit'\n        });\n  }\n\n  texto += `• ${horario} - ${titulo}\\n`;\n}\n\nreturn [{\n  json: {\n    applicationId: appId,\n    token,\n    resposta: texto\n  }\n}];"
+      },
+      "name": "Formatar Eventos Semana",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3344,
+        112
+      ],
+      "id": "547e0330-d51d-4c3c-8d08-2e727187e120"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://discord.com/api/v10/webhooks/{{$(\"Interpretar Comando\").first().json.applicationId}}/{{$(\"Interpretar Comando\").first().json.token}}/messages/@original",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{$json.resposta || \"📅 Nenhum retorno da agenda.\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Responder Hoje",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3120,
+        -272
+      ],
+      "id": "d751383d-c138-42ce-b961-c1ff90a69d1d"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://discord.com/api/v10/webhooks/{{$(\"Interpretar Comando\").first().json.applicationId}}/{{$(\"Interpretar Comando\").first().json.token}}/messages/@original",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{$json.resposta || \"✅ Comando executado.\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Responder Amanhã",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3120,
+        -80
+      ],
+      "id": "f21f3042-4108-47e9-9ffd-b735af83a51a"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://discord.com/api/v10/webhooks/{{$(\"Interpretar Comando\").first().json.applicationId}}/{{$(\"Interpretar Comando\").first().json.token}}/messages/@original",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{$json.resposta || \"✅ Comando executado.\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Responder Semana",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3120,
+        112
+      ],
+      "id": "bd1a31e3-e053-4d62-9d45-dc9bb79b8508"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{$json.erro}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Erro no Evento?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -3568,
+        880
+      ],
+      "id": "7a8c2ebc-d2ad-42e5-a624-824f92b5bbc7"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://discord.com/api/v10/webhooks/{{$(\"Interpretar Comando\").first().json.applicationId}}/{{$(\"Interpretar Comando\").first().json.token}}/messages/@original",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{$json.resposta || \"✅ Comando executado.\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Responder Erro Evento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3344,
+        976
+      ],
+      "id": "c218208c-66c1-45cf-a57c-a225f4275c1b"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "whatsapp.automation@nic-labs.com.br",
+          "mode": "list",
+          "cachedResultName": "whatsapp.automation@nic-labs.com.br"
+        },
+        "start": "={{$json.inicio}}",
+        "end": "={{$json.fim}}",
+        "additionalFields": {
+          "attendees": "={{[$json.email]}}",
+          "description": "={{$json.descricao}}",
+          "sendUpdates": "all",
+          "summary": "={{$json.titulo}}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -3344,
+        784
+      ],
+      "id": "737e8f8f-2312-42dd-a75b-4b965f868430",
+      "name": "Criar Evento Google Agenda",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "VCxHqZiCVQ43DW0h",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      applicationId: $(\"Interpretar Comando\").first().json.applicationId,\n      token: $(\"Interpretar Comando\").first().json.token,\n      resposta: `✅ Reunião criada no Google Agenda com sucesso!\\n\\n📌 ${$json.summary || \"Evento criado\"}`,\n    },\n  },\n];\n"
+      },
+      "name": "Mensagem Evento Criado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3120,
+        784
+      ],
+      "id": "ee8e9f00-53eb-47ee-9327-87f900ecf375"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://discord.com/api/v10/webhooks/{{$(\"Interpretar Comando\").first().json.applicationId}}/{{$(\"Interpretar Comando\").first().json.token}}/messages/@original",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{$json.resposta || \"✅ Comando executado.\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Responder Evento Criado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2896,
+        784
+      ],
+      "id": "b7d6c539-133a-4598-aa81-dd2784579203"
+    },
+    {
+      "parameters": {
+        "jsCode": "const texto = $json.mensagemOriginal || $json.mensagem || '';\nlet dataInformada = $json.data || '';\n\nif (!dataInformada) {\n  const match = texto.match(/(\\d{2})\\/(\\d{2})\\/(\\d{4})/);\n  if (match) dataInformada = `${match[1]}/${match[2]}/${match[3]}`;\n}\n\nconst match = String(dataInformada).match(/(\\d{2})\\/(\\d{2})\\/(\\d{4})/);\n\nif (!match) {\n  return [{\n    json: {\n      ...$json,\n      erro: true,\n      resposta: '❌ Informe a data assim: /agenda acao:dia data:12/06/2026'\n    }\n  }];\n}\n\nconst dia = match[1];\nconst mes = match[2];\nconst ano = match[3];\n\nconst start = new Date(`${ano}-${mes}-${dia}T00:00:00-03:00`);\nconst end = new Date(`${ano}-${mes}-${dia}T23:59:59-03:00`);\n\nreturn [{\n  json: {\n    ...$json,\n    inicio: start.toISOString(),\n    fim: end.toISOString(),\n    periodo: `${dia}/${mes}/${ano}`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3792,
+        304
+      ],
+      "id": "991fc90a-329e-4780-8cbf-6a552fa1324c",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "whatsapp.automation@nic-labs.com.br",
+          "mode": "list",
+          "cachedResultName": "whatsapp.automation@nic-labs.com.br"
+        },
+        "returnAll": true,
+        "timeMin": "={{$json.inicio}}",
+        "timeMax": "={{$json.fim}}",
+        "options": {
+          "orderBy": "startTime"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -3568,
+        304
+      ],
+      "id": "5149aa58-baa1-4f81-a0f2-c7788f341c18",
+      "name": "Buscar Eventos Semana1",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "VCxHqZiCVQ43DW0h",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const eventos = $input.all();\n\nconst appId = $(\"Interpretar Comando\").first().json.applicationId;\nconst token = $(\"Interpretar Comando\").first().json.token;\n\nif (eventos.length === 0) {\n  return [{\n    json: {\n      applicationId: appId,\n      token,\n      resposta: '📅 Nenhum evento encontrado nesse período.\\n\\n✅ Agenda livre.'\n    }\n  }];\n}\n\nlet texto = '📅 Horários encontrados:\\n\\n';\n\nfor (const item of eventos) {\n  const ev = item.json;\n  const titulo = ev.summary || ev.title || 'Sem título';\n\n  const inicioRaw = ev.start?.dateTime || ev.start?.date || ev.start;\n  const fimRaw = ev.end?.dateTime || ev.end?.date || ev.end;\n\n  let horarioInicio = '';\n  let horarioFim = '';\n\n  if (inicioRaw) {\n    const d = new Date(inicioRaw);\n    horarioInicio = d.toLocaleTimeString('pt-BR', {\n      timeZone: 'America/Sao_Paulo',\n      hour: '2-digit',\n      minute: '2-digit'\n    });\n  }\n\n  if (fimRaw) {\n    const d = new Date(fimRaw);\n    horarioFim = d.toLocaleTimeString('pt-BR', {\n      timeZone: 'America/Sao_Paulo',\n      hour: '2-digit',\n      minute: '2-digit'\n    });\n  }\n\n  texto += `• ${horarioInicio} às ${horarioFim} - ${titulo}\\n`;\n}\n\nreturn [{\n  json: {\n    applicationId: appId,\n    token,\n    resposta: texto\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3344,
+        304
+      ],
+      "id": "790e1bc0-f9ed-4e36-8d57-9e6bc0807c4e",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://discord.com/api/v10/webhooks/{{$(\"Interpretar Comando\").first().json.applicationId}}/{{$(\"Interpretar Comando\").first().json.token}}/messages/@original",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{$json.resposta || \"✅ Comando executado.\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Responder dia",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3120,
+        304
+      ],
+      "id": "baa8b029-9235-4f45-8236-2ff54b093037"
+    },
+    {
+      "parameters": {
+        "jsCode": "const hoje = new Date();\n\nconst inicio = new Date(hoje);\ninicio.setHours(0, 0, 0, 0);\n\nconst fim = new Date(hoje);\nfim.setMonth(fim.getMonth() + 12);\nfim.setHours(23, 59, 59, 999);\n\nreturn [{\n  json: {\n    ...$json,\n    inicio: inicio.toISOString(),\n    fim: fim.toISOString()\n  }\n}];"
+      },
+      "name": "Preparar Sincronização",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3792,
+        1168
+      ],
+      "id": "0c17f803-e43d-424c-ac86-b331ea09c83d"
+    },
+    {
+      "parameters": {
+        "jsCode": "const agendas = [\n  \"infraniclabs@gmail.com\",\n  \"1bbc4734f52ac327911041ede810089c8bdc1ed1d9f7fa8efe3a8cdac96430a5@group.calendar.google.com\",\n  \"549b1aba9a508066b5c2581712d48d2f2687c21ac61e557f03c71ea06f1af297@group.calendar.google.com\",\n  \"21a8917ba94b3c53d11c330bb6c0d1d140044b3dd3776b52bc135e25b06c9495@group.calendar.google.com\",\n  \"41387878e1ce6339de57e0de2f9e0259ed1fc229e3bed0fbf3bf008b6cf07a24@group.calendar.google.com\",\n  \"007cfc3a84a70e4c6aa30aeab62512b24b555ea39973c20340e850f2d430b13f@group.calendar.google.com\",\n  \"bc28ab57cebee53e7fb105f7205f66f2b2c3bf70a7bed7b51ff25329189f3fc4@group.calendar.google.com\",\n  \"1d019bd578ebc00ede4d387f1ec9009fd608567dc427e5f29c21abfcaa7a9cd4@group.calendar.google.com\",\n  \"e1e8099b6fb407add6aa8464e923967876a0974b13f6b2e0cf1fbaed885686c7@group.calendar.google.com\",\n  \"727e031fd226e8778c8944fc07996f48e5cc3dc6ed82e25030c900f942130fe8@group.calendar.google.com\",\n  \"c29e7dd03483d424850ffa4f151fe4277b483c9909368d33b9b3e51e6b85a15f@group.calendar.google.com\",\n  \"992618022942715ff051b1cd34c3039e7830f8935aee2413dae5f5392b979813@group.calendar.google.com\",\n  \"c58ecdb8d26d434d907aa3e8545f0c50afa5ddc0798766504a74d0e07155d89d@group.calendar.google.com\"\n];\n\nreturn agendas.map((calendarId) => ({\n  json: {\n    ...$json,\n    calendarioOrigem: calendarId,\n    inicio: $json.inicio,\n    fim: $json.fim,\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3568,
+        1168
+      ],
+      "id": "131ae306-8cea-474f-af7b-24ca15918bd6",
+      "name": "Listar Agendas Para Sincronizar"
+    },
+    {
+      "parameters": {
+        "jsCode": "const eventos = $input.all();\n\nreturn eventos\n  .map((item) => {\n    const ev = item.json;\n\n    const inicio = ev.start?.dateTime || null;\n    const fim = ev.end?.dateTime || null;\n\n    if (!inicio || !fim) return null;\n\n    return {\n      json: {\n        applicationId: $(\"Interpretar Comando\").first().json.applicationId,\n        token: $(\"Interpretar Comando\").first().json.token,\n        titulo: String(ev.summary || \"Sem título\").slice(0, 200),\n        inicio,\n        fim,\n        descricao: `COPIA_NIC_ID_ORIGINAL:${ev.id}\nORIGEM:${ev.organizer?.displayName || ev.organizer?.email || \"Agenda Compartilhada\"}`,\n        local: \"\",\n        eventoOriginalId: ev.id,\n      },\n    };\n  })\n  .filter(Boolean);\n"
+      },
+      "name": "Preparar Cópias das Agendas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3120,
+        1168
+      ],
+      "id": "54eb9b66-daab-47fe-98b0-5824b244198b",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "whatsapp.automation@nic-labs.com.br",
+          "mode": "list",
+          "cachedResultName": "whatsapp.automation@nic-labs.com.br"
+        },
+        "start": "={{$json.inicio}}",
+        "end": "={{$json.fim}}",
+        "additionalFields": {
+          "description": "={{$json.descricao}}",
+          "summary": "={{$json.titulo}}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -2000,
+        1264
+      ],
+      "id": "8f183190-7e05-4b89-aaf7-81334cecc276",
+      "name": "Copiar Evento Para Agenda Nova",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "VCxHqZiCVQ43DW0h",
+          "name": "Google Calendar account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst criados = items.filter(item => !item.json.error).length;\nconst erros = items.filter(item => item.json.error).length;\n\nreturn [{\n  json: {\n    applicationId: $(\"Interpretar Comando\").first().json.applicationId,\n    token: $(\"Interpretar Comando\").first().json.token,\n    resposta: `✅ Sincronização finalizada.\\n\\n📌 Eventos novos processados: ${items.length}\\n✅ Criados: ${criados}\\n⚠️ Com erro: ${erros}\\n\\nA agenda principal não foi alterada.`\n  }\n}];"
+      },
+      "name": "Mensagem Sincronização Concluída",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1776,
+        1264
+      ],
+      "id": "14abb47c-2f6c-4c7d-b12b-a1e45193bded"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://discord.com/api/v10/webhooks/{{$(\"Interpretar Comando\").first().json.applicationId}}/{{$(\"Interpretar Comando\").first().json.token}}/messages/@original",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{$json.resposta || \"✅ Comando executado.\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Responder Sincronização",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1552,
+        1264
+      ],
+      "id": "cf42c8be-b843-463e-b961-90e7edc97a33"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "={{$json.calendarioOrigem}}",
+          "mode": "id"
+        },
+        "returnAll": true,
+        "timeMin": "={{$json.inicio}}",
+        "timeMax": "={{$json.fim}}",
+        "options": {
+          "orderBy": "startTime"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -3344,
+        1168
+      ],
+      "id": "31ee1baa-9d49-4318-8aa2-9aa018fb4f5d",
+      "name": "Buscar Eventos Agendas Compartilhadas",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "VCxHqZiCVQ43DW0h",
+          "name": "Google Calendar account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "whatsapp.automation@nic-labs.com.br",
+          "mode": "list",
+          "cachedResultName": "whatsapp.automation@nic-labs.com.br"
+        },
+        "limit": 1,
+        "timeMin": "={{$json.inicio}}",
+        "timeMax": "={{$json.fim}}",
+        "options": {
+          "query": "={{$json.eventoOriginalId}}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -2896,
+        1248
+      ],
+      "id": "d404a1f0-38ad-403a-810e-858dec122f9e",
+      "name": "Get many events",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "VCxHqZiCVQ43DW0h",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Pega applicationId e token do primeiro item que tiver esses campos\nconst contexto =\n  items.find(item => item.json.applicationId && item.json.token)?.json || {};\n\nconst novos = items.filter(\n  (item) =>\n    !item.json.id &&\n    item.json.inicio &&\n    item.json.fim &&\n    item.json.titulo\n);\n\nif (novos.length === 0) {\n  return [\n    {\n      json: {\n        applicationId: contexto.applicationId || \"\",\n        token: contexto.token || \"\",\n        semNovos: true,\n        resposta: \"✅ Sincronização concluída. Nenhum evento novo para copiar.\",\n      },\n    },\n  ];\n}\n\nreturn novos.map((item) => ({\n  json: {\n    applicationId: item.json.applicationId || contexto.applicationId || \"\",\n    token: item.json.token || contexto.token || \"\",\n    titulo: item.json.titulo,\n    inicio: item.json.inicio,\n    fim: item.json.fim,\n    descricao: item.json.descricao,\n    local: item.json.local || \"\",\n    eventoOriginalId: item.json.eventoOriginalId,\n    semNovos: false,\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2448,
+        1168
+      ],
+      "id": "aa3babcf-6edd-432c-92d2-e2efbe45f336",
+      "name": "Filtrar Apenas Eventos Novos"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6d7dec07-1417-4242-b067-7c6eb7768b0c",
+              "leftValue": "={{$json.semNovos ? true : false}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2224,
+        1168
+      ],
+      "id": "be1cc801-ff18-4fa5-ab0d-5939d26ffcf1",
+      "name": "Tem Eventos Novos Para Copiar?"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://discord.com/api/v10/webhooks/{{$(\"Interpretar Comando\").first().json.applicationId}}/{{$(\"Interpretar Comando\").first().json.token}}/messages/@original",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{$json.resposta || \"✅ Comando executado.\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Responder Sem Eventos Novos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2000,
+        1072
+      ],
+      "id": "53836342-7eb6-4aca-9461-1f98cc621146"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://discord.com/api/v10/webhooks/{{$(\"Interpretar Comando\").first().json.applicationId}}/{{$(\"Interpretar Comando\").first().json.token}}/messages/@original",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{$json.resposta || \"✅ Comando executado.\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2896,
+        400
+      ],
+      "id": "9c5be68b-0cf2-4d6a-9fb5-3469c7b21618",
+      "name": "Responder exclusão"
+    },
+    {
+      "parameters": {
+        "jsCode": "const texto = $json.mensagemOriginal || $json.mensagem || \"\";\n\nconst termo = (\n  $json.titulo ||\n  texto\n    .replace(/!agenda/gi, \"\")\n    .replace(/excluir/gi, \"\")\n    .replace(/deletar/gi, \"\")\n    .replace(/apagar/gi, \"\")\n).trim();\n\nif (!termo) {\n  return [{\n    json: {\n      ...$json,\n      erro: true,\n      resposta: \"❌ Informe o nome da reunião. Exemplo: /agenda acao:excluir titulo:Reunião Cliente\"\n    }\n  }];\n}\n\nconst inicio = new Date();\ninicio.setMonth(inicio.getMonth() - 1);\n\nconst fim = new Date();\nfim.setMonth(fim.getMonth() + 12);\n\nreturn [{\n  json: {\n    ...$json,\n    termo,\n    inicio: inicio.toISOString(),\n    fim: fim.toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3792,
+        496
+      ],
+      "id": "d7b27979-8976-466d-90c4-6e183d213a42",
+      "name": "Preparar exclusão"
+    },
+    {
+      "parameters": {
+        "jsCode": "const appId = $(\"Interpretar Comando\").first().json.applicationId;\nconst token = $(\"Interpretar Comando\").first().json.token;\n\nconst termo = ($(\"Preparar exclusão\").first().json.termo || \"\")\n  .toLowerCase()\n  .trim();\n\nconst eventos = $input.all();\n\nif (eventos.length === 0) {\n  return [\n    {\n      json: {\n        applicationId: appId,\n        token,\n        erro: true,\n        resposta: \"❌ Nenhum evento encontrado com esse nome na agenda nova.\",\n      },\n    },\n  ];\n}\n\nconst filtrados = eventos.filter((item) => {\n  const titulo = String(item.json.summary || \"\").toLowerCase();\n  return !termo || titulo.includes(termo);\n});\n\nif (filtrados.length === 0) {\n  return [\n    {\n      json: {\n        applicationId: appId,\n        token,\n        erro: true,\n        resposta: \"❌ Nenhum evento encontrado com esse nome na agenda nova.\",\n      },\n    },\n  ];\n}\n\nif (filtrados.length > 1) {\n  let texto =\n    \"⚠️ Encontrei mais de um evento. Use um nome mais específico:\\n\\n\";\n\n  filtrados.slice(0, 10).forEach((item, index) => {\n    const ev = item.json;\n    const titulo = ev.summary || \"Sem título\";\n    const inicio = ev.start?.dateTime || ev.start?.date || \"\";\n    texto += `${index + 1}. ${titulo} - ${inicio}\\n`;\n  });\n\n  return [\n    {\n      json: {\n        applicationId: appId,\n        token,\n        erro: true,\n        resposta: texto,\n      },\n    },\n  ];\n}\n\nconst ev = filtrados[0].json;\n\nreturn [\n  {\n    json: {\n      applicationId: appId,\n      token,\n      erro: false,\n      eventId: ev.id,\n      titulo: ev.summary || \"Sem título\",\n      resposta: `🗑️ Evento \"${ev.summary || \"Sem título\"}\" encontrado para exclusão.`,\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3344,
+        496
+      ],
+      "id": "2fd4ccad-35db-40be-8e3e-edb7982e1822",
+      "name": "Selecionar Evento Para Excluir"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "whatsapp.automation@nic-labs.com.br",
+          "mode": "list",
+          "cachedResultName": "whatsapp.automation@nic-labs.com.br"
+        },
+        "returnAll": true,
+        "timeMin": "={{$json.inicio}}",
+        "timeMax": "={{$json.fim}}",
+        "options": {
+          "query": "={{$json.termo}}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -3568,
+        496
+      ],
+      "id": "e3641237-d06b-4d37-a074-685b4d91189e",
+      "name": "Buscar Eventos",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "VCxHqZiCVQ43DW0h",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "whatsapp.automation@nic-labs.com.br",
+          "mode": "list",
+          "cachedResultName": "whatsapp.automation@nic-labs.com.br"
+        },
+        "eventId": "={{$json.eventId}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -2896,
+        592
+      ],
+      "id": "27c0a86d-8220-4008-aa8d-f4b1169ca107",
+      "name": "Deletar Evento",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "VCxHqZiCVQ43DW0h",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a77e7aef-8429-4eda-b752-3addc0248b27",
+              "leftValue": "={{$json.erro}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3120,
+        496
+      ],
+      "id": "4eb660da-a0cc-4e07-a53a-78cbeec99485",
+      "name": "pode excluir ?"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://discord.com/api/v10/webhooks/{{$(\"Interpretar Comando\").first().json.applicationId}}/{{$(\"Interpretar Comando\").first().json.token}}/messages/@original",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "🗑️ Evento excluído com sucesso da agenda nova."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2672,
+        592
+      ],
+      "id": "c2fa06ca-ed3c-4830-8428-18f4ccaa6d97",
+      "name": "Responder exclusão2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -2672,
+        1168
+      ],
+      "id": "f562bd83-75a0-48ff-bdba-0916bf5a2aa2",
+      "name": "Mesclar Cópia + Verificação"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Discord": {
+      "main": [
+        [
+          {
+            "node": "Interpretar Comando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interpretar Comando": {
+      "main": [
+        [
+          {
+            "node": "Switch Ação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Ação": {
+      "main": [
+        [
+          {
+            "node": "Preparar Consulta Hoje",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Consulta Amanhã",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Consulta Semana",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Evento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Sincronização",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar exclusão",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Consulta Hoje": {
+      "main": [
+        [
+          {
+            "node": "Buscar Eventos Hoje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Consulta Amanhã": {
+      "main": [
+        [
+          {
+            "node": "Buscar Eventos Amanhã",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Consulta Semana": {
+      "main": [
+        [
+          {
+            "node": "Buscar Eventos Semana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Eventos Hoje": {
+      "main": [
+        [
+          {
+            "node": "Formatar Eventos Hoje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Eventos Amanhã": {
+      "main": [
+        [
+          {
+            "node": "Formatar Eventos Amanhã",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Eventos Semana": {
+      "main": [
+        [
+          {
+            "node": "Formatar Eventos Semana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar Eventos Hoje": {
+      "main": [
+        [
+          {
+            "node": "Responder Hoje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar Eventos Amanhã": {
+      "main": [
+        [
+          {
+            "node": "Responder Amanhã",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar Eventos Semana": {
+      "main": [
+        [
+          {
+            "node": "Responder Semana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Evento": {
+      "main": [
+        [
+          {
+            "node": "Erro no Evento?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Erro no Evento?": {
+      "main": [
+        [
+          {
+            "node": "Responder Erro Evento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Criar Evento Google Agenda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Evento Google Agenda": {
+      "main": [
+        [
+          {
+            "node": "Mensagem Evento Criado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem Evento Criado": {
+      "main": [
+        [
+          {
+            "node": "Responder Evento Criado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Buscar Eventos Semana1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Eventos Semana1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Responder dia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Sincronização": {
+      "main": [
+        [
+          {
+            "node": "Listar Agendas Para Sincronizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copiar Evento Para Agenda Nova": {
+      "main": [
+        [
+          {
+            "node": "Mensagem Sincronização Concluída",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem Sincronização Concluída": {
+      "main": [
+        [
+          {
+            "node": "Responder Sincronização",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar Agendas Para Sincronizar": {
+      "main": [
+        [
+          {
+            "node": "Buscar Eventos Agendas Compartilhadas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Eventos Agendas Compartilhadas": {
+      "main": [
+        [
+          {
+            "node": "Preparar Cópias das Agendas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Cópias das Agendas": {
+      "main": [
+        [
+          {
+            "node": "Get many events",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Mesclar Cópia + Verificação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar Apenas Eventos Novos": {
+      "main": [
+        [
+          {
+            "node": "Tem Eventos Novos Para Copiar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem Eventos Novos Para Copiar?": {
+      "main": [
+        [
+          {
+            "node": "Responder Sem Eventos Novos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Copiar Evento Para Agenda Nova",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many events": {
+      "main": [
+        [
+          {
+            "node": "Mesclar Cópia + Verificação",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Preparar exclusão": {
+      "main": [
+        [
+          {
+            "node": "Buscar Eventos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Selecionar Evento Para Excluir": {
+      "main": [
+        [
+          {
+            "node": "pode excluir ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Eventos": {
+      "main": [
+        [
+          {
+            "node": "Selecionar Evento Para Excluir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deletar Evento": {
+      "main": [
+        [
+          {
+            "node": "Responder exclusão2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pode excluir ?": {
+      "main": [
+        [
+          {
+            "node": "Responder exclusão",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Deletar Evento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mesclar Cópia + Verificação": {
+      "main": [
+        [
+          {
+            "node": "Filtrar Apenas Eventos Novos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "fe3bf123-aef3-44ee-8821-bb03e25fe214",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b84c6224cb83c26e06ee76f065d602fe7af3e46ac1bf30a2860d8d5c82e6c330"
+  },
+  "nodeGroups": [],
+  "id": "J6HZClIcYYA9V8qn",
+  "tags": []
+}

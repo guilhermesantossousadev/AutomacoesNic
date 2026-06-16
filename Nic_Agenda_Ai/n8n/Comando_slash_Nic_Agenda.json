@@ -1,0 +1,189 @@
+{
+  "name": "Comando slash Nic Agenda",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n-infra.nic-labs.com/webhook/processar-agenda",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-nic-automation-secret",
+              "value": "Nic_labsautomationsecret145885454548547"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "origem",
+              "value": "discord_slash_command"
+            },
+            {
+              "name": "comando",
+              "value": "/ndoc"
+            },
+            {
+              "name": "interaction",
+              "value": "=interaction = {{JSON.stringify($json.body)}}"
+            },
+            {
+              "name": "guildId",
+              "value": "={{$json.body.guild_id}}"
+            },
+            {
+              "name": "channelId",
+              "value": "={{$json.body.channel_id}}"
+            },
+            {
+              "name": "usuario",
+              "value": "={{$json.body.member.user.username}}"
+            },
+            {
+              "name": "userId",
+              "value": "={{$json.body.member.user.id}}"
+            },
+            {
+              "name": "applicationId",
+              "value": "={{$json.body.application_id}}"
+            },
+            {
+              "name": "token",
+              "value": "={{$json.body.token}}"
+            },
+            {
+              "name": "acao",
+              "value": "={{($json.body || $json).data?.options?.find(o => o.name === \"acao\")?.value || \"\"}}"
+            },
+            {
+              "name": "titulo",
+              "value": "={{($json.body || $json).data?.options?.find(o => o.name === \"titulo\")?.value || \"\"}}"
+            },
+            {
+              "name": "data",
+              "value": "={{($json.body || $json).data?.options?.find(o => o.name === \"data\")?.value || \"\"}}"
+            },
+            {
+              "name": "hora",
+              "value": "={{($json.body || $json).data?.options?.find(o => o.name === \"hora\")?.value || \"\"}}"
+            },
+            {
+              "name": "email",
+              "value": "={{($json.body || $json).data?.options?.find(o => o.name === \"email\")?.value || \"\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -288,
+        1120
+      ],
+      "id": "d41e9717-c8ab-49dd-a580-314be04be246",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "discord-agenda-slash",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -736,
+        1216
+      ],
+      "id": "6ece1c75-fe35-4da5-8d9d-9a6b4f77b471",
+      "name": "Webhook1",
+      "webhookId": "96a7d78c-f0c0-4866-b5a8-13cb844d37ca"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9cfa846e-0f6b-45dc-b4e0-36ec15e0b1e4",
+              "leftValue": "={{$json.headers[\"x-nic-automation-secret\"]}}",
+              "rightValue": "Nic_labsautomationsecret145885454548547",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -512,
+        1216
+      ],
+      "id": "6eceda25-a4aa-4228-8647-fbdfe6f7aa24",
+      "name": "If"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "496f1130-bbf7-4fc6-bed4-e3cdb4b2a5e0",
+  "meta": {
+    "instanceId": "b84c6224cb83c26e06ee76f065d602fe7af3e46ac1bf30a2860d8d5c82e6c330"
+  },
+  "nodeGroups": [],
+  "id": "B3y0dh9ulaEDKP70",
+  "tags": []
+}
