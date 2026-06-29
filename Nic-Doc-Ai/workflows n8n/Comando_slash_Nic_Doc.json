@@ -1,0 +1,102 @@
+{
+  "name": "Comando slash Nic Doc",
+  "nodes": [
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"type\": 4,\n  \"data\": {\n    \"content\": \"📄 Documento recebido. Iniciando análise...\",\n    \"flags\": 64\n  }\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -2016,
+        -144
+      ],
+      "id": "8c203107-d660-40f1-bce5-d0597ac9b15e",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n-infra.nic-labs.com/webhook/ndoc-processar-prod",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-nic-automation-secret",
+              "value": "Nic_labsautomationsecret145885454548547"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  origem: \"discord_slash_command\",\n  comando: \"/ndoc\",\n  interaction: $json.body,\n  guildId: $json.body.guild_id,\n  channelId: $json.body.channel_id,\n  usuario: $json.body.member.user.username,\n  userId: $json.body.member.user.id,\n  applicationId: $json.body.application_id,\n  token: $json.body.token\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2016,
+        -336
+      ],
+      "id": "662eb0a8-bf3b-4b5c-87d0-91e28e282b77",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "discord-ndoc-path",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2240,
+        -240
+      ],
+      "id": "d3d77cce-3a27-48f3-8cca-ed5074c8638c",
+      "name": "Webhook",
+      "webhookId": "96a7d78c-f0c0-4866-b5a8-13cb844d37ca"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "6e5a8427-ea45-47f1-8f92-253ad5cf1fb0",
+  "meta": {
+    "instanceId": "b84c6224cb83c26e06ee76f065d602fe7af3e46ac1bf30a2860d8d5c82e6c330"
+  },
+  "nodeGroups": [],
+  "id": "egcQzKbQI8ZKuxXu",
+  "tags": []
+}

@@ -1,0 +1,329 @@
+{
+  "name": "NIC Doc AI - Workflow 2 Processar Corrigido",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ndoc-processar-prod",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -4864,
+        -256
+      ],
+      "id": "7f4f8285-4a30-40be-a50a-06fd86f6939c",
+      "name": "Webhook Processar /ndoc",
+      "webhookId": "23236b84-5edb-4dc4-95ab-ee92ab2ea159"
+    },
+    {
+      "parameters": {
+        "jsCode": "const payload = $json.body || $json;\n\nlet interaction = payload.interaction || {};\n\nif (typeof interaction === 'string') {\n  try {\n    interaction = JSON.parse(interaction);\n  } catch (error) {\n    interaction = {};\n  }\n}\n\nconst options = interaction.data?.options || [];\nconst resolved = interaction.data?.resolved || {};\n\nfunction getOption(name) {\n  return options.find((option) => option.name === name)?.value || null;\n}\n\nconst acao = getOption('acao');\nconst instrucoes = getOption('instrucoes') || '';\nconst arquivoId = getOption('arquivo');\nconst arquivo = resolved.attachments?.[arquivoId];\n\nconst applicationId = payload.applicationId || payload.application_id || interaction.application_id;\nconst token = payload.token || interaction.token;\n\nif (!applicationId || !token) {\n  return [{\n    json: {\n      erro: true,\n      applicationId,\n      token,\n      mensagem: '❌ Não foi possível localizar applicationId ou token da interação.'\n    }\n  }];\n}\n\nif (!arquivo) {\n  return [{\n    json: {\n      erro: true,\n      applicationId,\n      token,\n      mensagem: '❌ Nenhum arquivo foi encontrado no comando /ndoc.'\n    }\n  }];\n}\n\nconst nome = arquivo.filename || '';\nconst extensao = nome.toLowerCase().slice(nome.lastIndexOf('.'));\n\nif (!['.pdf', '.docx', '.txt'].includes(extensao)) {\n  return [{\n    json: {\n      erro: true,\n      applicationId,\n      token,\n      mensagem: '❌ Formato inválido. Envie apenas arquivos PDF, DOCX ou TXT.'\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    erro: false,\n    applicationId,\n    token,\n    acao,\n    instrucoes,\n    arquivoNome: nome,\n    arquivoUrl: arquivo.url,\n    arquivoTamanho: arquivo.size,\n    extensao,\n    contentType: arquivo.content_type || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4416,
+        -256
+      ],
+      "id": "00b67438-ec4c-4420-a7f7-fa534f14fba9",
+      "name": "Extrair Dados"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "tem-erro",
+              "leftValue": "={{$json.erro}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -4192,
+        -256
+      ],
+      "id": "628c8407-0db0-4f9e-b57f-8f60f73563a9",
+      "name": "Tem Erro?"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://discord.com/api/v10/webhooks/{{$json.applicationId}}/{{$json.token}}/messages/@original",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { content: $json.mensagem } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3968,
+        -352
+      ],
+      "id": "5b55911e-6989-4f97-9924-b370a243a415",
+      "name": "Responder Erro Discord"
+    },
+    {
+      "parameters": {
+        "url": "={{$json.arquivoUrl}}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3968,
+        -160
+      ],
+      "id": "dd5279f0-6985-46e0-a8fb-0b534a2bf522",
+      "name": "Baixar Arquivo"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -3744,
+        -160
+      ],
+      "id": "802b5d64-1b52-4f94-8075-d63bf38d3b23",
+      "name": "Extract From File"
+    },
+    {
+      "parameters": {
+        "jsCode": "const texto = $json.text || $json.data || $json.content || '';\nconst acao = $('Extrair Dados').item.json.acao;\nconst instrucoes = $('Extrair Dados').item.json.instrucoes;\nconst arquivoNome = $('Extrair Dados').item.json.arquivoNome;\nconst applicationId = $('Extrair Dados').item.json.applicationId;\nconst token = $('Extrair Dados').item.json.token;\n\nlet tarefa = 'Analise este documento.';\n\nif (acao === 'resumo') tarefa = 'Gere um resumo objetivo deste documento.';\nif (acao === 'requisitos') tarefa = 'Extraia requisitos funcionais e não funcionais deste documento.';\nif (acao === 'negocio') tarefa = 'Extraia regras de negócio deste documento.';\nif (acao === 'pendencias') tarefa = 'Identifique pendências, riscos e pontos em aberto deste documento.';\nif (acao === 'tarefas') tarefa = 'Transforme este documento em uma lista de tarefas práticas.';\n\nreturn [{\n  json: {\n    applicationId,\n    token,\n    prompt: `Você é o NIC Doc AI, um assistente especializado em análise de documentos.\\n\\nArquivo: ${arquivoNome}\\nTipo de análise: ${acao}\\nInstruções adicionais: ${instrucoes || 'Nenhuma'}\\n\\nTarefa: ${tarefa}\\n\\nResponda em português do Brasil, de forma organizada e profissional.\\n\\nConteúdo do documento:\\n${String(texto).slice(0, 80000)}`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3520,
+        -160
+      ],
+      "id": "7828a1d5-b3b8-4c90-bc91-ea9d55a54cf9",
+      "name": "Montar Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "{{OPENAI_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  model: 'gpt-4.1-mini',\n  messages: [\n    {\n      role: 'system',\n      content: 'Você é o NIC Doc AI, um assistente especializado em análise de documentos, requisitos, regras de negócio e pendências.'\n    },\n    {\n      role: 'user',\n      content: $json.prompt\n    }\n  ],\n  temperature: 0.3\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3296,
+        -160
+      ],
+      "id": "94b19f02-d4d1-45bb-ac82-ff9bbf2b8cfd",
+      "name": "OpenAI"
+    },
+    {
+      "parameters": {
+        "jsCode": "const resposta = $json.choices?.[0]?.message?.content || 'Não foi possível gerar a análise.';\nconst applicationId = $('Montar Prompt').item.json.applicationId;\nconst token = $('Montar Prompt').item.json.token;\n\nconst content = resposta.length > 1900\n  ? resposta.slice(0, 1900) + '\\n\\n⚠️ Resposta cortada por limite do Discord.'\n  : resposta;\n\nreturn [{\n  json: {\n    applicationId,\n    token,\n    content\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3072,
+        -160
+      ],
+      "id": "d0e331e8-9fd6-4a95-9d9b-8eb494da35c9",
+      "name": "Formatar Resposta"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://discord.com/api/v10/webhooks/{{$json.applicationId}}/{{$json.token}}/messages/@original",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { content: $json.content } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2848,
+        -160
+      ],
+      "id": "3c1e2a33-c0ca-4d39-afd2-1632a6e9c40e",
+      "name": "Responder Discord"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secretRecebido = String($json.headers[\"x-nic-automation-secret\"] || \"\").trim();\nconst secretEsperado = \"Nic_labsautomationsecret145885454548547\";\n\nif (secretRecebido !== secretEsperado) {\n  throw new Error(\"Acesso negado: secret inválido\");\n}\n\nreturn [\n  {\n    json: $json\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4640,
+        -256
+      ],
+      "id": "cc4761ca-016f-4f36-8483-743f94d8bd44",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Processar /ndoc": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrair Dados": {
+      "main": [
+        [
+          {
+            "node": "Tem Erro?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem Erro?": {
+      "main": [
+        [
+          {
+            "node": "Responder Erro Discord",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Baixar Arquivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar Arquivo": {
+      "main": [
+        [
+          {
+            "node": "Extract From File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract From File": {
+      "main": [
+        [
+          {
+            "node": "Montar Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Prompt": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Formatar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar Resposta": {
+      "main": [
+        [
+          {
+            "node": "Responder Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Extrair Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "cb142c46-5729-47f2-ab16-1d57b85cb848",
+  "meta": {
+    "instanceId": "b84c6224cb83c26e06ee76f065d602fe7af3e46ac1bf30a2860d8d5c82e6c330"
+  },
+  "nodeGroups": [],
+  "id": "kyU00TdwWJLGpsGh",
+  "tags": []
+}

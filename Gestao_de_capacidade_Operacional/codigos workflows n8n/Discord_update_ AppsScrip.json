@@ -1,0 +1,165 @@
+{
+  "name": "Discord update -> Apps Script -> Discord",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://script.google.com/macros/s/AKfycbwUPSADxuqZAmItFN0v7Qsb2xRbTdY_dUE7-LZfzuk9Y_ZR-1EogiSpV59bXH2kQ9l3/exec",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  comando: $json.body.comando,\n  usuario: $json.body.usuario,\n  canalId: $json.body.canalId\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        384,
+        -160
+      ],
+      "id": "189a752e-2a1b-4b05-9a4f-b16d52b53785",
+      "name": "Chamar Apps Script1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const reports = $json.reports || [];\n\nconst hoje = new Date();\n\nconst dataFormatada = hoje.toLocaleDateString('pt-BR', {\n  weekday: 'long',\n  day: '2-digit',\n  month: '2-digit',\n  year: 'numeric',\n});\n\nfunction clean(value) {\n  return String(value || '')\n    .replace(/<b>/g, '**')\n    .replace(/<\\/b>/g, '**')\n    .replace(/<br\\s*\\/?>/g, '\\n')\n    .trim();\n}\n\nfunction limit(value, max) {\n  const text = clean(value);\n  if (text.length <= max) return text;\n  return text.substring(0, max - 3) + '...';\n}\n\nif ($json.success === false) {\n  return [\n    {\n      json: {\n        embeds: [\n          {\n            title: '❌ Erro ao executar Apps Script',\n            description: clean($json.error || $json.message || 'Erro desconhecido.'),\n            color: 15158332,\n            timestamp: hoje.toISOString(),\n          },\n        ],\n      },\n    },\n  ];\n}\n\nif (!reports.length) {\n  return [\n    {\n      json: {\n        embeds: [\n          {\n            title: '⚠️ Nenhum relatório encontrado',\n            description: clean($json.discordContent || $json.message || 'O Apps Script não retornou reports.'),\n            color: 16776960,\n            timestamp: hoje.toISOString(),\n          },\n        ],\n      },\n    },\n  ];\n}\n\nconst embeds = reports.map((report) => {\n  const fields = [];\n\n  for (const section of report.sections || []) {\n    let value = '';\n\n    for (const widget of section.widgets || []) {\n      const d = widget.decoratedText || {};\n\n      const nome = clean(d.text || '');\n      const area = clean(d.topLabel || '');\n      const info = clean(d.bottomLabel || '');\n\n      if (nome) value += `${nome}\\n`;\n      if (area) value += `🏢 ${area}\\n`;\n      if (info) value += `${info}\\n\\n`;\n    }\n\n    if (value.trim()) {\n      fields.push({\n        name: limit(section.header || 'Informações', 256),\n        value: limit(value.trim(), 1024),\n        inline: false,\n      });\n    }\n  }\n\n  return {\n    title:\n      report.title === 'Escala de Trabalho'\n        ? '📋 Escala de Trabalho'\n        : '🏖️ Relatório de Ausências',\n    description: `🗓️ ${dataFormatada}\\n⏰ Atualização automática`,\n    color: report.color || 3447003,\n    fields: fields.slice(0, 25),\n    footer: {\n      text: 'Atualizado automaticamente pelo n8n',\n    },\n    timestamp: hoje.toISOString(),\n  };\n});\n\nreturn [\n  {\n    json: {\n      embeds,\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        -160
+      ],
+      "id": "dbdd3a00-1160-4f19-a231-c949e4d8c78f",
+      "name": "Formatar Discord Embed1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "update-discord-prod-4185644X",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -64,
+        -160
+      ],
+      "id": "88ad35ca-524e-486f-8f19-1311422c2dd7",
+      "name": "Webhook",
+      "webhookId": "5198b76c-eeef-4558-9c99-0dcb911bdf79"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fb3c714c-17d5-4b01-8f66-8bdada7d77ae",
+              "leftValue": "={{$json.headers[\"x-nic-automation-secret\"]}}",
+              "rightValue": "Nic_labsautomationsecret145885454548547",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        160,
+        -160
+      ],
+      "id": "8933f936-1cb5-4a01-90fa-ade1736587be",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://discordapp.com/api/webhooks/1515000473948651620/X_zix62QMsx1jUR5x3PwDiRlUrGeNFZYnl-rUH1NH4qUPngewdi8xYJAUM3CrF_ZD4tF",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  embeds: $json.embeds\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        832,
+        -160
+      ],
+      "id": "c3045840-5dd9-48f2-a254-3baa306b6c0c",
+      "name": "Enviar para Discord1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chamar Apps Script1": {
+      "main": [
+        [
+          {
+            "node": "Formatar Discord Embed1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar Discord Embed1": {
+      "main": [
+        [
+          {
+            "node": "Enviar para Discord1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Chamar Apps Script1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "1c5ae2d1-5826-4880-a89a-1d0b1eddd31b",
+  "meta": {
+    "instanceId": "b84c6224cb83c26e06ee76f065d602fe7af3e46ac1bf30a2860d8d5c82e6c330"
+  },
+  "nodeGroups": [],
+  "id": "aEolIfx8OZ45GaEo",
+  "tags": []
+}

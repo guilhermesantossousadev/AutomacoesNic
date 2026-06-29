@@ -1,0 +1,156 @@
+{
+  "name": "Discord slash update",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "discord-update-path",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        208
+      ],
+      "id": "8f1ffce4-2538-40b9-a5d4-e9d8dcca1562",
+      "name": "Webhook",
+      "webhookId": "96a7d78c-f0c0-4866-b5a8-13cb844d37ca"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || {};\n\nif (body.type === 1) {\n  return [\n    {\n      json: {\n        type: 1\n      }\n    }\n  ];\n}\n\nreturn [\n  {\n    json: {\n      type: 5,\n      data: {\n        flags: 64\n      }\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -112
+      ],
+      "id": "8dc6fd40-0a95-432f-acd8-1b27e4e3eee1",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n-infra-hooks.nic-labs.com/webhook/update-discord-prod-4185644X",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-NIC-Automation-Secret",
+              "value": "Nic_labsautomationsecret145885454548547"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "origem ",
+              "value": "discord_slash_command"
+            },
+            {
+              "name": "comando ",
+              "value": "/update"
+            },
+            {
+              "name": "guildId",
+              "value": "={{$json.interaction.guild_id}}"
+            },
+            {
+              "name": "channelId",
+              "value": "={{$json.interaction.channel_id}}"
+            },
+            {
+              "name": "usuario",
+              "value": "={{$json.interaction.member.user.username}}"
+            },
+            {
+              "name": "userId",
+              "value": "={{$json.interaction.member.user.id}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        112
+      ],
+      "id": "79d56303-e50e-4137-a0af-379803387782",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"type\": 4,\n  \"data\": {\n    \"content\": \"⏳ Atualização iniciada. O relatório será enviado em instantes.\",\n    \"flags\": 64\n  }\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        224,
+        304
+      ],
+      "id": "870d0309-7f99-497a-a40c-a5c4bbfe3325",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        []
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "039d8c96-3fe4-4e02-86ad-94d8c9637ff9",
+  "meta": {
+    "instanceId": "b84c6224cb83c26e06ee76f065d602fe7af3e46ac1bf30a2860d8d5c82e6c330"
+  },
+  "nodeGroups": [],
+  "id": "ZQy0zA1on3RzvZB3",
+  "tags": []
+}
