@@ -1,54 +1,49 @@
-# 🤖 Automações NIC Labs — Backup de Projetos
+# Automacoes NIC Labs
 
-## Sobre este Repositório
+Repositorio de backup e documentacao das automacoes desenvolvidas para apoio operacional da NIC Labs.
 
-Este repositório tem como objetivo armazenar um backup dos projetos de automação desenvolvidos por mim durante minha atuação como Estagiário de Infraestrutura e TI na NIC Labs.
+Este repositorio reune exports de workflows n8n, documentacao tecnica e referencias de integracoes usadas em bots e automacoes corporativas. Ele nao deve ser tratado como ambiente de producao; a finalidade principal e preservar os projetos, facilitar manutencoes futuras e deixar o historico pronto para versionamento.
 
-Os projetos aqui presentes foram criados para apoiar processos internos da empresa, automatizar tarefas operacionais, integrar sistemas e otimizar fluxos de trabalho utilizando diferentes tecnologias e plataformas.
+## Projetos
 
-## Objetivo
+| Projeto | Descricao | Principais integracoes |
+| --- | --- | --- |
+| `Gestao_de_capacidade_Operacional` | Automacao de escalas, ausencias e atualizacoes operacionais via Discord e Google Chat. | Discord, n8n, Google Apps Script, Google Sheets, Google Chat |
+| `Nic-Doc-Ai` | Analise inteligente de documentos enviados pelo Discord usando IA. | Discord, n8n, OpenAI, processamento de PDF/DOCX/TXT |
+| `Nic_Agenda_Ai` | Consulta, criacao, exclusao e sincronizacao de eventos de agenda pelo Discord. | Discord, n8n, Google Calendar |
 
-Este repositório não representa um ambiente de produção e não deve ser utilizado para implantação direta dos projetos.
+## Estrutura
 
-Sua finalidade é exclusivamente:
+```txt
+.
+|-- Gestao_de_capacidade_Operacional/
+|   |-- README.md
+|   `-- codigos workflows n8n/
+|-- Nic-Doc-Ai/
+|   |-- README.md
+|   `-- workflows n8n/
+|-- Nic_Agenda_Ai/
+|   |-- README.md
+|   `-- n8n/
+|-- docs/
+|   |-- WORKFLOWS.md
+|   |-- COMMIT_CHECKLIST.md
+|   `-- archive/
+`-- README.md
+```
 
-* Manter uma cópia de segurança (backup) dos projetos desenvolvidos;
-* Preservar o histórico das automações criadas;
-* Servir como portfólio técnico das soluções implementadas;
-* Facilitar futuras consultas, manutenções e evoluções.
+## Documentacao complementar
 
-## Projetos Contidos
+- [Mapa dos workflows](docs/WORKFLOWS.md): lista os exports n8n, responsabilidades, endpoints e principais nos.
+- [Checklist de commit](docs/COMMIT_CHECKLIST.md): roteiro rapido antes de versionar novas alteracoes.
+- READMEs individuais: cada projeto possui sua propria documentacao com objetivo, fluxo, arquivos e pontos de atencao.
 
-Entre os projetos armazenados neste repositório podem estar:
+## Cuidados antes de publicar
 
-* Bots para Discord;
-* Integrações com Google Workspace;
-* Workflows n8n;
-* Google Apps Script;
-* Sistemas de consulta e distribuição de escalas;
-* Automações de agenda corporativa;
-* Ferramentas de apoio operacional;
-* Outras soluções desenvolvidas para necessidades internas da NIC Labs.
-
-## Tecnologias Utilizadas
-
-* Node.js
-* Discord.js
-* n8n
-* Google Apps Script
-* Google Sheets
-* Google Calendar
-* APIs REST
-* JavaScript
-* Git e GitHub
+Os exports podem conter URLs internas, webhooks, identificadores de servicos ou referencias operacionais. Antes de publicar em repositorios publicos, revise os JSONs e rotacione qualquer token, webhook ou segredo que tenha sido exportado junto com os workflows.
 
 ## Autor
 
-**Guilherme Santos**
-Estagiário de Infraestrutura e TI — NIC Labs
+Guilherme Santos
 
-GitHub: github.com/guilhermesantossousadev
-
----
-
-**Observação:** Este repositório é destinado exclusivamente para fins de backup, documentação e portfólio dos projetos desenvolvidos durante minha experiência profissional na NIC Labs.
+Estagiario de Infraestrutura e TI - NIC Labs

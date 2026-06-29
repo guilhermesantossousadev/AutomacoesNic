@@ -1,218 +1,100 @@
-# 🤖 NIC Bot Escalas
+# Gestao de Capacidade Operacional
 
-Sistema corporativo de automação para gestão de escalas de trabalho e ausências da NIC Labs, integrado ao Discord, n8n, Google Apps Script, Google Sheets, e Google Chat.
+Automacao corporativa para consulta e distribuicao de informacoes sobre escalas de trabalho, ausencias e atualizacoes operacionais da NIC Labs.
 
----
+O projeto usa workflows n8n para receber o comando `/update` no Discord, acionar uma rotina de processamento via Google Apps Script e enviar o resultado para canais de comunicacao internos.
 
-# 📋 Visão Geral
+## Objetivo
 
-O NIC Bot Escalas centraliza a consulta e distribuição de informações sobre escalas de trabalho e ausências dos colaboradores.
+Reduzir consultas manuais em planilhas e centralizar a publicacao de informacoes operacionais atualizadas, como:
 
-Através do comando `/update` no Discord, gestores e equipes autorizadas podem disparar uma atualização em tempo real, que consulta as planilhas corporativas, processa os dados e publica relatórios automaticamente nos canais de comunicação da empresa.
+- escala do dia;
+- ausentes hoje;
+- ausentes amanha;
+- proximas ausencias;
+- retornos previstos;
+- mensagens formatadas para canais internos.
 
----
+## Funcionalidades
 
-# 🏗️ Arquitetura da Solução
+| Area | Recursos |
+| --- | --- |
+| Escalas | Consulta da escala diaria, agrupamento por colaborador, horarios de entrada e saida, area de atuacao. |
+| Ausencias | Ausentes hoje, ausentes amanha, proximas ausencias e retornos previstos. |
+| Discord | Slash command `/update`, resposta imediata ao usuario e integracao com n8n via webhook. |
+| Automacao | Execucao manual, execucao agendada e integracao com Google Workspace. |
+
+## Fluxo
 
 ```txt
-Usuário
-   │
-   ▼
-Discord (/update)
-   │
-   ▼
-Workflow Discord Slash Command (n8n)
-   │
-   ├── Resposta imediata ao Discord
-   │
-   ▼
-Workflow Principal (n8n)
-   │
-   ▼
+Discord /update
+    |
+    v
+Workflow n8n: Discord slash update
+    |
+    v
+Workflow n8n: Discord update -> Apps Script -> Discord
+    |
+    v
 Google Apps Script
-   │
-   ▼
+    |
+    v
 Google Sheets
-   │
-   ▼
-Processamento de Dados
-   │
-   ├── Relatório de Escalas
-   └── Relatório de Ausências
-   │
-   ▼
-Google Chat
+    |
+    v
+Mensagem final no Discord/Google Chat
 ```
 
----
+## Arquivos
 
-# 🚀 Funcionalidades
+| Arquivo | Funcao |
+| --- | --- |
+| `codigos workflows n8n/Discord_slash_update.json` | Recebe o slash command `/update`, prepara a resposta inicial e encaminha o processamento. |
+| `codigos workflows n8n/Discord_update_ AppsScrip.json` | Chama o Apps Script, formata o retorno e envia a mensagem final. |
 
-## Escalas
+## Workflows
 
-* Consulta automática da escala diária
-* Agrupamento por colaborador
-* Exibição de horários de entrada e saída
-* Identificação da área de atuação
-* Atualização automática programada
+### Discord slash update
 
-## Ausências
+| Item | Valor |
+| --- | --- |
+| Status no export | Ativo |
+| Webhook | `discord-update-path` |
+| Nos principais | `Webhook`, `Code in JavaScript`, `HTTP Request`, `Respond to Webhook` |
 
-* Ausentes hoje
-* Ausentes amanhã
-* Próximas ausências
-* Retorno hoje
-* Retorno amanhã
-* Tratamento de ausências parciais e dia inteiro
+Responsabilidade: receber o comando do Discord, responder rapidamente e encaminhar para o workflow de processamento.
 
-## Discord
+### Discord update -> Apps Script -> Discord
 
-* Slash Command `/update`
-* Resposta imediata ao usuário
-* Integração com n8n via Webhook
+| Item | Valor |
+| --- | --- |
+| Status no export | Ativo |
+| Webhook | `update-discord-prod-4185644X` |
+| Nos principais | `Chamar Apps Script1`, `Formatar Discord Embed1`, `Webhook`, `If`, `Enviar para Discord1` |
 
-## Automação
+Responsabilidade: executar a rotina operacional, montar embed/mensagem e publicar o resultado.
 
-* Execução manual
-* Execução agendada
-* Controle de alterações para evitar mensagens duplicadas
-* Integração com Google Workspace
+## Integracoes
 
----
+- Discord Slash Commands.
+- n8n self-hosted.
+- Google Apps Script.
+- Google Sheets.
+- Google Chat ou webhook de mensagem.
 
-# 🛠️ Tecnologias Utilizadas
+## Operacao
 
-## Backend
-
-* Node.js
-* Discord.js
-
-## Automação
-
-* n8n
-
-## Google Workspace
-
-* Google Apps Script
-* Google Sheets
-* Google Chat
-
-## Infraestrutura
-
-* Docker
-* GitHub
-* Linux Server
-* Kubernetes (planejado)
-
----
-
-# 📂 Estrutura do Projeto
-
-```txt
-nicbotescalas/
-
-├── n8n/
-│   ├── Discord Slash Command.json
-│   └── Workflow Principal.json
-│
-├── apps-script/
-│   └── bot_unificado_google_chat.gs
-│
-└── README.md
-```
-
-# 💬 Comandos Disponíveis
-
-## Atualização Manual
+Comando principal:
 
 ```txt
 /update
 ```
 
-Executa:
+O comando dispara a atualizacao manual das informacoes operacionais. A execucao agendada, quando utilizada, deve ser controlada no n8n ou no ambiente de automacao configurado.
 
-* Atualização da escala do dia
-* Atualização das ausências
-* Envio dos relatórios para o Google Chat
+## Manutencao
 
----
-
-# 📊 Relatórios Gerados
-
-## Escala de Trabalho
-
-```txt
-📋 Escala de Trabalho
-
-Alvaro Neto
-Infraestrutura
-07:45 às 14:00
-
-Lorena Maielo
-Gestão
-09:00 às 16:00
-```
-
-## Relatório de Ausências
-
-```txt
-🏖️ Relatório de Ausências
-
-Ausentes Hoje
-Retornando Hoje
-Ausentes Amanhã
-Próximas Ausências
-Retornando Amanhã
-```
-
-## Recomendações
-
-* Utilizar segredo compartilhado entre Discord e n8n
-* Restringir execução por cargo
-* Restringir execução por canal
-* Rotacionar tokens periodicamente
-* Utilizar variáveis de ambiente
-
----
-
-# 📦 Deploy
-
-O projeto pode ser executado em:
-
-* Servidor Linux
-* Docker
-* n8n Self Hosted
-
----
-
-# 💾 Backup
-
-Recomenda-se backup periódico de:
-
-* Workflows n8n
-* Código Apps Script
-* Variáveis de ambiente
-* Repositório GitHub
-* Configurações do Discord Developer Portal
-
----
-
-# 📈 Benefícios
-
-* Eliminação de consultas manuais
-* Atualização em tempo real
-* Centralização da comunicação
-* Redução de erros operacionais
-* Escalabilidade corporativa
-* Fácil manutenção
-
----
-
-# 👨‍💻 Autor
-
-Guilherme Santos
-
-Estagiário de Infraestrutura e Gerência de TI – NIC Labs
-
-GitHub:
-https://github.com/guilhermesantossousadev
+- Exportar os workflows antes de qualquer alteracao em producao.
+- Revisar webhooks e credenciais antes de publicar o repositorio.
+- Validar se o Apps Script ainda esta publicado e acessivel.
+- Conferir se as planilhas esperadas mantem o mesmo formato de colunas.

@@ -1,324 +1,98 @@
 # NIC Doc AI
 
-Sistema de análise inteligente de documentos integrado ao Discord, desenvolvido para automatizar a leitura, interpretação e extração de informações relevantes através de Inteligência Artificial.
+Sistema de analise inteligente de documentos integrado ao Discord. O usuario envia um arquivo pelo comando `/ndoc`, escolhe o tipo de analise e recebe uma resposta estruturada gerada por IA.
 
-O sistema utiliza **Discord Slash Commands**, **n8n** e **OpenAI**, permitindo que usuários enviem documentos diretamente pelo Discord e recebam análises estruturadas em segundos.
+## Objetivo
 
----
+Automatizar a leitura de documentos tecnicos, funcionais e corporativos, reduzindo o tempo gasto em triagem manual e extraindo informacoes uteis para tecnologia, produto, processos e gestao.
 
-# Objetivo
+## Funcionalidades
 
-O NIC Doc AI foi criado para reduzir o tempo gasto na leitura de documentos técnicos, funcionais e corporativos.
+| Area | Recursos |
+| --- | --- |
+| Documentos | Leitura de PDF, DOCX e TXT; download automatico do anexo enviado no Discord. |
+| Processamento | Extracao de texto pelo n8n e montagem de prompt conforme a acao escolhida. |
+| IA | Envio do conteudo para a OpenAI e formatacao da resposta. |
+| Discord | Atualizacao da resposta original no Discord apos o processamento. |
 
-Através de IA, o sistema transforma documentos em informações úteis para equipes de:
+## Acoes do comando
 
-* Tecnologia
-* Produto
-* Negócios
-* Processos
-* Gestão de Projetos
+| Acao | Resultado esperado |
+| --- | --- |
+| `resumo` | Gera um resumo objetivo do documento. |
+| `requisitos` | Extrai requisitos funcionais e nao funcionais. |
+| `negocio` | Identifica regras de negocio. |
+| `pendencias` | Lista pendencias, riscos, duvidas e lacunas. |
+| `tarefas` | Transforma o conteudo em tarefas praticas. |
 
----
-
-# Arquitetura
-
-```txt
-Usuário
-   │
-   ▼
-Discord
-   │
-   ▼
-Slash Command (/ndoc)
-   │
-   ▼
-Workflow 1 (Discord Gateway)
-   │
-   ├── Resposta imediata ao usuário
-   │
-   ▼
-Workflow 2 (Processamento)
-   │
-   ├── Validação de segurança
-   ├── Download do documento
-   ├── Extração de texto
-   ├── OpenAI
-   └── Resposta final
-   │
-   ▼
-Discord
-```
-
----
-
-# Stack
-
-## Plataforma
-
-* Discord Developer Portal
-* Discord Slash Commands
-* n8n Self Hosted
-
-## Inteligência Artificial
-
-* OpenAI API
-* GPT-4.1 Mini
-
-## Processamento de Arquivos
-
-* Extract From File (n8n)
-* PDF
-* DOCX
-* TXT
-
----
-
-# Funcionalidades
-
-## Processamento de Documentos
-
-* Leitura de arquivos PDF
-* Leitura de arquivos DOCX
-* Leitura de arquivos TXT
-* Download automático de anexos
-* Extração automática de texto
-* Controle de tamanho de documentos
-
-## Inteligência Artificial
-
-### Resumo Executivo
+## Fluxo
 
 ```txt
-/ndoc
-ação: resumo
+Discord /ndoc
+    |
+    v
+Workflow n8n: Comando slash Nic Doc
+    |
+    v
+Workflow n8n: NIC Doc AI - Workflow 2 Processar Corrigido
+    |
+    v
+Download e extracao do arquivo
+    |
+    v
+OpenAI
+    |
+    v
+Resposta final no Discord
 ```
 
-Gera um resumo objetivo do documento.
+## Arquivos
 
----
+| Arquivo | Funcao |
+| --- | --- |
+| `workflows n8n/Comando_slash_Nic_Doc.json` | Recebe o slash command `/ndoc` e encaminha os dados para processamento. |
+| `workflows n8n/Processar.json` | Baixa o arquivo, extrai texto, chama a OpenAI e responde ao Discord. |
 
-### Requisitos
+## Workflows
+
+### Comando slash Nic Doc
+
+| Item | Valor |
+| --- | --- |
+| Status no export | Ativo |
+| Webhook | `discord-ndoc-path` |
+| Nos principais | `Webhook`, `HTTP Request`, `Respond to Webhook` |
+
+Responsabilidade: receber a interacao do Discord e iniciar o processamento assincrono.
+
+### NIC Doc AI - Workflow 2 Processar Corrigido
+
+| Item | Valor |
+| --- | --- |
+| Status no export | Ativo |
+| Webhook | `ndoc-processar-prod` |
+| Nos principais | `Webhook Processar /ndoc`, `Extrair Dados`, `Baixar Arquivo`, `Extract From File`, `Montar Prompt`, `OpenAI`, `Formatar Resposta`, `Responder Discord` |
+
+Responsabilidade: executar a analise documental e atualizar a mensagem original do Discord.
+
+## Integracoes
+
+- Discord Slash Commands.
+- n8n self-hosted.
+- OpenAI API.
+- Extrator de arquivos do n8n.
+
+## Exemplo de uso
 
 ```txt
-/ndoc
-ação: requisitos
+/ndoc acao:resumo arquivo:documento.pdf
+/ndoc acao:requisitos arquivo:especificacao.docx
+/ndoc acao:pendencias arquivo:relatorio.txt
 ```
 
-Extrai:
-
-* Requisitos Funcionais
-* Requisitos Não Funcionais
-
----
-
-### Regras de Negócio
-
-```txt
-/ndoc
-ação: negocio
-```
-
-Identifica regras de negócio presentes no documento.
-
----
-
-### Pendências
-
-```txt
-/ndoc
-ação: pendencias
-```
-
-Localiza:
-
-* Pendências
-* Riscos
-* Dúvidas
-* Informações faltantes
-
----
-
-### Tarefas
-
-```txt
-/ndoc
-ação: tarefas
-```
-
-Transforma o conteúdo em uma lista prática de tarefas.
-
----
-
-# Fluxo dos Workflows
-
-## Workflow 1 - Discord Slash Command
-
-Responsável por:
-
-* Receber interações do Discord
-* Validar endpoint
-* Responder imediatamente ao usuário
-* Encaminhar dados para o Workflow 2
-
-Webhook:
-
-```txt
-discord-ndoc-path
-```
-
----
-
-## Workflow 2 - Processamento
-
-Responsável por:
-
-* Validar segurança
-* Baixar documentos
-* Extrair texto
-* Chamar OpenAI
-* Atualizar resposta original no Discord
-
-Webhook:
-
-```txt
-ndoc-processar-prod
-```
-
----
-
-# Segurança
-
-A comunicação entre workflows utiliza:
-
-```txt
-X-NIC-Automation-Secret
-```
-
-Validação obrigatória:
-
-```txt
-Nic_labsautomationsecret145885454548547
-```
-
-Fluxos sem autenticação válida são descartados.
-
----
-
-# Estrutura dos Comandos
-
-## Slash Command
-
-```txt
-/ndoc
-```
-
-Parâmetros:
-
-### ação
-
-Opções disponíveis:
-
-```txt
-resumo
-requisitos
-negocio
-pendencias
-tarefas
-```
-
-### arquivo
-
-Tipos suportados:
-
-```txt
-PDF
-DOCX
-TXT
-```
-
----
-
-# Exemplo de Uso
-
-Resumo:
-
-```txt
-/ndoc
-ação: resumo
-arquivo: documento.pdf
-```
-
----
-
-Extração de Requisitos:
-
-```txt
-/ndoc
-ação: requisitos
-arquivo: documento.docx
-```
-
----
-
-Identificação de Pendências:
-
-```txt
-/ndoc
-ação: pendencias
-arquivo: documento.pdf
-```
-
----
-
-# Roadmap
-
-## Versão Atual
-
-* [x] Discord Slash Commands
-* [x] n8n Self Hosted
-* [x] OpenAI
-* [x] PDF
-* [x] DOCX
-* [x] TXT
-* [x] Segurança entre workflows
-* [x] Processamento assíncrono
-
-## Próximas Versões
-
-* [ ] Histórico de análises
-* [ ] Banco de dados SQLite
-* [ ] Exportação Markdown
-* [ ] Exportação PDF
-* [ ] Respostas em Embed
-* [ ] Logs de utilização
-* [ ] Dashboard Administrativo
-* [ ] Múltiplos idiomas
-* [ ] Cache de documentos
-
----
-
-# Ambiente
-
-Servidor n8n:
-
-```txt
-https://n8n-infra.nic-labs.com
-```
-
-Discord:
-
-```txt
-NIC Doc AI
-```
-
----
-
-# Autor
-
-**Guilherme Santos**
-
-Estagiário de Infraestrutura e Gerência de TI
-
-NIC Labs
-
-Projeto desenvolvido utilizando Discord, n8n e Inteligência Artificial para automação de análise documental.
+## Manutencao
+
+- Conferir limites de tamanho de arquivo antes de processar documentos grandes.
+- Validar a credencial da OpenAI no n8n.
+- Revisar prompts quando novas acoes forem adicionadas.
+- Remover ou mascarar URLs e tokens antes de publicar os exports.

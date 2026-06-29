@@ -1,350 +1,110 @@
-# 🤖 NIC Agenda Bot
+# NIC Agenda AI
 
-Sistema corporativo de automação de agendas desenvolvido para a NIC Labs.
+Automacao de agenda corporativa integrada ao Discord e ao Google Calendar. O projeto permite consultar, criar, excluir e sincronizar eventos por meio de Slash Commands.
 
-O projeto integra Discord, Google Calendar, Cloudflare Workers e n8n para permitir consultas, criação, exclusão e sincronização de eventos através de Slash Commands.
+## Objetivo
 
----
+Centralizar operacoes de agenda diretamente no Discord, evitando consultas manuais no Google Calendar para tarefas simples do dia a dia.
 
-# 📋 Visão Geral
+## Funcionalidades
 
-O objetivo do projeto é centralizar o gerenciamento de agendas corporativas através do Discord.
+| Funcionalidade | Descricao |
+| --- | --- |
+| Consulta do dia | Lista eventos previstos para hoje. |
+| Consulta de amanha | Lista eventos previstos para o proximo dia. |
+| Consulta semanal | Lista eventos dentro da janela semanal configurada. |
+| Consulta por data | Busca eventos de um dia especifico. |
+| Criacao de evento | Cria evento com titulo, data, hora e convidado. |
+| Exclusao de evento | Localiza e remove evento pelo titulo. |
+| Sincronizacao | Copia eventos novos de agendas compartilhadas para uma agenda central. |
 
-Os usuários podem executar comandos diretamente no servidor e o sistema consulta ou manipula eventos no Google Calendar sem necessidade de acessar a interface do Google.
+## Comando principal
 
----
+```txt
+/agenda
+```
 
-# 🚀 Funcionalidades
+Acoes suportadas pelo workflow:
 
-## Consultar Agenda
-
-Comandos disponíveis:
-
-/agenda acao:hoje
-
-/agenda acao:amanha
-
-/agenda acao:semana
-
-/agenda acao:dia
-
----
-
-## Criar Evento
-
-Exemplo:
-
-/agenda acao:criar titulo:Reunião Cliente data:17/06/2026 hora:14:00 email:cliente@email.com
-
-Funcionalidades:
-
-* Cria evento no Google Calendar
-* Adiciona convidado automaticamente
-* Define duração padrão de 1 hora
-* Envia convite por e-mail
-
----
-
-## Excluir Evento
-
-Exemplo:
-
-/agenda acao:excluir titulo:Reunião Cliente
-
-Funcionalidades:
-
-* Localiza evento pelo título
-* Remove evento da agenda
-
----
-
-## Sincronizar Agendas
-
-Exemplo:
-
-/agenda acao:sincronizar
-
-Funcionalidades:
-
-* Consulta agendas compartilhadas
-* Identifica eventos ainda não copiados
-* Replica eventos para agenda central
-* Evita duplicação
-
----
-
-# 🏗 Arquitetura
-
-Discord
-↓
-Cloudflare Worker
-↓
-Workflow 01 (Recepção do Slash Command)
-↓
-Workflow 02 (Processamento)
-↓
-Google Calendar
-
----
-
-# 🔧 Tecnologias Utilizadas
-
-Discord Developer Portal
-
-Discord Slash Commands
-
-Cloudflare Workers
-
-n8n Self Hosted
-
-Google Calendar API
-
-Google OAuth2
-
-JavaScript
-
----
-
-# 📁 Estrutura do Projeto
-
-/workflows
-├── workflow_01_comando_slash.json
-├── workflow_02_processar_agenda.json
-
-/cloudflare-worker
-├── worker.js
-├── wrangler.toml
-
-/docs
-├── instalacao.md
-├── troubleshooting.md
-├── arquitetura.md
-
-README.md
-
----
-
-# ⚙️ Workflow 01
-
-Responsável por:
-
-* Receber requisição do Cloudflare Worker
-* Validar chave de segurança
-* Extrair parâmetros do Slash Command
-* Encaminhar para Workflow 02
-
-Webhook:
-
-/webhook/discord-agenda-slash
-
-Campos recebidos:
-
-applicationId
-
-token
-
-guildId
-
-channelId
-
-usuario
-
-userId
-
-acao
-
-titulo
-
-data
-
-hora
-
-email
-
----
-
-# ⚙️ Workflow 02
-
-Responsável por:
-
-* Interpretar comando
-* Consultar agenda
-* Criar evento
-* Excluir evento
-* Sincronizar agendas
-* Retornar resposta ao Discord
-
-Comandos suportados:
-
+```txt
 hoje
-
 amanha
-
 semana
-
 dia
-
 criar
-
 excluir
-
 sincronizar
+```
 
----
+## Fluxo
 
-# ☁️ Cloudflare Worker
+```txt
+Discord /agenda
+    |
+    v
+Workflow n8n: Comando slash Nic Agenda
+    |
+    v
+Workflow n8n: Processar slash Nic Agenda
+    |
+    v
+Google Calendar
+    |
+    v
+Resposta final no Discord
+```
 
-Responsável por:
+## Arquivos
 
-* Validar assinatura do Discord
-* Responder PING (type 1)
-* Responder ACK imediato (type 5)
-* Encaminhar payload para o n8n
+| Arquivo | Funcao |
+| --- | --- |
+| `n8n/Comando_slash_Nic_Agenda.json` | Recebe o slash command `/agenda` e encaminha a interacao para processamento. |
+| `n8n/Processar_slash_Nic_Agenda.json` | Interpreta a acao, consulta ou altera eventos no Google Calendar e responde ao Discord. |
 
-Variáveis:
+## Workflows
 
-DISCORD_PUBLIC_KEY
+### Comando slash Nic Agenda
 
-N8N_WEBHOOK_URL
+| Item | Valor |
+| --- | --- |
+| Status no export | Ativo |
+| Webhook | `discord-agenda-slash` |
+| Nos principais | `Webhook1`, `If`, `HTTP Request1` |
 
-NIC_SECRET
+Responsabilidade: receber a interacao, validar o fluxo inicial e encaminhar para o processamento da agenda.
 
----
+### Processar slash Nic Agenda
 
-# 🔐 Segurança
+| Item | Valor |
+| --- | --- |
+| Status no export | Ativo |
+| Webhook | `processar-agenda` |
+| Nos principais | `Webhook Discord`, `Interpretar Comando`, `Switch Acao`, `Preparar Evento`, `Buscar Eventos`, `Criar Evento Google Agenda`, `Deletar Evento`, `Listar Agendas Para Sincronizar`, `Responder ...` |
 
-Toda comunicação entre Cloudflare Worker e n8n utiliza:
+Responsabilidade: executar a acao solicitada no Google Calendar e atualizar a resposta no Discord.
 
-Header:
+## Exemplos de uso
 
-x-nic-automation-secret
-
-Valor:
-
-Nic_labsautomationsecret145885454548547
-
-O Workflow 01 valida a chave antes de processar qualquer requisição.
-
----
-
-# 📅 Google Calendar
-
-Credencial:
-
-Google Calendar OAuth2 API
-
-Permissões necessárias:
-
-https://www.googleapis.com/auth/calendar
-
-https://www.googleapis.com/auth/calendar.events
-
----
-
-# 🧪 Testes
-
-Consultar agenda:
-
+```txt
 /agenda acao:hoje
-
-Criar evento:
-
-/agenda acao:criar titulo:Teste data:17/06/2026 hora:14:00 email:teste@email.com
-
-Excluir evento:
-
-/agenda acao:excluir titulo:Teste
-
-Sincronizar:
-
+/agenda acao:amanha
+/agenda acao:semana
+/agenda acao:dia data:17/06/2026
+/agenda acao:criar titulo:Reuniao Cliente data:17/06/2026 hora:14:00 email:cliente@email.com
+/agenda acao:excluir titulo:Reuniao Cliente
 /agenda acao:sincronizar
+```
 
----
+## Integracoes
 
-# 🚨 Troubleshooting
+- Discord Slash Commands.
+- n8n self-hosted.
+- Google Calendar API.
+- Google OAuth2.
 
-## Interactions Endpoint URL não pôde ser verificada
+## Manutencao
 
-Verificar:
-
-* Worker online
-* Public Key correta
-* Resposta ao Discord type 1
-
----
-
-## redirect_uri_mismatch
-
-Verificar:
-
-Google Cloud Console
-
-Authorized Redirect URIs
-
-A URL deve ser exatamente igual à exibida pelo n8n.
-
----
-
-## Invalid Webhook Token
-
-O token de interação expirou.
-
-Necessário responder ao Discord em até 15 minutos.
-
----
-
-## Missing Access
-
-Verificar permissões do bot:
-
-View Channels
-
-Send Messages
-
-Use Application Commands
-
----
-
-## Invalid Form Body
-
-Verificar parâmetros enviados ao Discord.
-
-Campos obrigatórios:
-
-titulo
-
-data
-
-hora
-
-email
-
----
-
-# 📦 Backup
-
-Sempre exportar:
-
-Workflow 01
-
-Workflow 02
-
-Cloudflare Worker
-
-Credenciais OAuth
-
-Comandos Slash
-
-Antes de qualquer alteração em produção.
-
----
-
-# 👨‍💻 Autor
-
-Guilherme Santos
-
-Estagiário de Infraestrutura e Gerência de TI
-
-NIC Labs
-
-Projeto desenvolvido para automação corporativa de agendas utilizando Discord, Google Calendar, Cloudflare Workers e n8n.
+- Conferir permissoes da credencial do Google Calendar.
+- Validar nomes e IDs das agendas usadas na sincronizacao.
+- Testar criacao e exclusao em uma agenda controlada antes de alterar producao.
+- Revisar webhooks e segredos antes de publicar os exports.
